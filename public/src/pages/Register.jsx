@@ -20,6 +20,7 @@ function Register () {
          event.preventDefault();
          if(handleValidation())
          {
+            console.log("Validation")
             const {username,email,password,confirmPassword}=data;
             const{postData} = await axios.post(registerRoute,
                 {
@@ -52,7 +53,9 @@ function Register () {
           draggable: true,
           theme: "dark",
           } 
-        )}
+         
+        )
+        return false;}
         else if(username.length<3)
         {
             toast.error("Username length should be greater than 3",
@@ -63,6 +66,7 @@ function Register () {
                 draggable: true,
                 theme: "dark",
             })
+            return false;
         }
         else if(password.length<8)
         {
@@ -74,6 +78,7 @@ function Register () {
                 draggable: true,
                 theme: "dark",
             })
+            return false;
         }
         else if(email=="")
         {
@@ -85,7 +90,9 @@ function Register () {
                 draggable: true,
                 theme: "dark",
             })
+            return false;
         }
+        return true;
     }
     return (
         <>
