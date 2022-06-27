@@ -1,12 +1,18 @@
-import {React,useState} from 'react';
+import {React,useState,useEffect} from 'react';
 import styled, { css } from 'styled-components';
-import {Link} from "react-router-dom";
+import {Link,useNavigate} from "react-router-dom";
 import logo from "../assets/logo.png"
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { registerRoute } from '../utils/APIRoutes';
 import axios from 'axios';
 function Register () {
+  useEffect(() => {
+    if (localStorage.getItem("user-chat")) {
+      navigate("/");
+    }
+  }, []);
+  let navigate = useNavigate();
     const [data,newdata] =useState(
         {
             username: "",
@@ -15,33 +21,62 @@ function Register () {
             confirmPassword : ""
         }
     )
+
     const handleSubmit = async (event) =>
     {
          event.preventDefault();
          if(handleValidation())
          {
             console.log("Validation")
+            console.log(data);
             const {username,email,password,confirmPassword}=data;
-            const{postData} = await axios.post(registerRoute,
+            console.log(data)
+            await axios.post(registerRoute,
                 {
                     username,
                     email,
                     password,
                     confirmPassword
+                }).then((res)=>
+                {
+                  const reply =res.data;
+                  console.log(reply)
+                  if (reply.status === false) {
+                    toast.error(reply.msg, 
+                      {
+                           position: "bottom-right",
+                           autoClose: 8000,
+                           pauseOnHover: true,
+                           draggable: true,
+                            theme: "dark",
+                      });
+                  }
+                  else
+                  {
+                    navigate("/login")
+                  }
+                }).catch((e)=>
+                {
+                  console.log(e);
                 });
+               
          }
     }
     const handleChange =(event) =>
     {
+        console.log(data);
         newdata(
         {
             ...data,
             [event.target.name]:event.target.value
         }
+        
         )
+        console.log(data)
     }
     const handleValidation = () =>
     {
+        
         const {username,email,password,confirmPassword} = data;
         if(password!=confirmPassword)
         {
@@ -80,7 +115,7 @@ function Register () {
             })
             return false;
         }
-        else if(email=="")
+        else if(email==="")
         {
             toast.error("Please enter the email",
             {
