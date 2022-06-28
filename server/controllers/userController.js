@@ -39,22 +39,33 @@ module.exports.register = async (req, res, next) => {
     }
   };
   module.exports.setAvatar = async (req, res, next) => {
-    try {
+    
       const userId = req.params.id;
-      const avatarImage = req.body.avatarImage;
-      const user = await User.findByIdAndUpdate(
+      console.log(req.body.avatarImage)
+       const user=await User.findByIdAndUpdate(
         userId,
         {
           isAvatarImageSet: true,
-          avatarImage,
-        },
-      );
-      console.log(user);
-      return res.json({
-       user
-      });
+          avatarImage:  req.body.avatarImage,
+        }, { new: true })
+        console.log(user);
+        user.password=undefined;
+        return res.json({
+         user
+        })
+    } 
+  module.exports.getAllUsers = async (req, res, next) => {
+    try {
+      const users = await User.find({ _id: { $ne: req.params.id } }).select([
+        "email",
+        "username",
+        "avatarImage",
+        "_id",
+      ]);
+      return res.json(users);
     } catch (ex) {
       next(ex);
     }
   };
+  
   

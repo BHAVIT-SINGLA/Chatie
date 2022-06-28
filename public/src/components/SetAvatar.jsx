@@ -37,7 +37,7 @@ export default function SetAvatar () {
     useEffect( () => {
         if ((!localStorage.getItem("user-chat")) || (JSON.parse(
             localStorage.getItem("user-chat")
-          ).avatarImage!=undefined))
+          ).avatarImage!=""))
           navigate("/login");
         else
         {
@@ -80,7 +80,7 @@ export default function SetAvatar () {
                   {
                     localStorage.setItem(
                      "user-chat",
-                      JSON.stringify(user)
+                      JSON.stringify(reply.user)
                     )
                    
                   }
