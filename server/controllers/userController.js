@@ -67,5 +67,10 @@ module.exports.register = async (req, res, next) => {
       next(ex);
     }
   };
+  module.exports.logout = async(req,res,next) =>
+  {
+      await User.deleteOne({_id:req.params.id});
+      return res.json({status: 200});
+  }
   
   
