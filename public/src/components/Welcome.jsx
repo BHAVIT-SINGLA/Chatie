@@ -4,11 +4,15 @@ import Robot from "../assets/robot.gif";
 export default function Welcome() {
   const [userName, setUserName] = useState("");
   useEffect( () => {
-    setUserName(
-       JSON.parse(
-        localStorage.getItem("user-chat")
-      ).username
+    const data= JSON.parse(
+      localStorage.getItem("user-chat")
     );
+    if(data)
+    {
+    setUserName(
+       data.userName
+    );
+    }
   }, []);
   return (
     <Container>

@@ -1,8 +1,82 @@
-import React from "react";
+import React,{useState,useEffect,useRef} from 'react'
 import styled from "styled-components";
 import Logout from "./Logout";
-export default function ChatArea({currentChat})
+import ChatInput from "./ChatInput";
+import axios from "axios";
+import {sendMessageRoute,recieveMessageRoute} from "../utils/APIRoutes"
+export default function ChatArea({currentChat, socket})
 {
+  const [currentallMsg,setall] = useState([]);
+  const [arrivalMessage, setArrivalMessage] = useState(null);
+  const scrollRef = useRef();
+  let sender=JSON.parse(
+    localStorage.getItem("user-chat"));
+  useEffect(()=>
+  {
+    const fetchData = async () => {
+      await axios.post(recieveMessageRoute,
+        {
+            from: sender._id,
+            to : currentChat._id
+        }).then((res) =>
+        {
+          console.log(res.data);
+          setall(res.data.allcurMessage);
+        }).catch((e)=>
+        {
+          console.log(e);
+        })
+    }
+    fetchData()
+      .catch(console.error);
+  },[currentChat])
+  const handleSend = async (msg)=>
+  {
+    
+       if(msg.length>0)
+       {
+        const recive =currentChat;
+        socket.current.emit("send-msg", {
+          to: recive._id,
+          from: sender._id,
+          msg,
+        });
+         await axios.post(sendMessageRoute,
+          {
+            from:sender._id,
+            to:recive._id,
+            msg:msg
+          })
+         
+          const msgs = [...currentallMsg];
+          msgs.push({ fromSelf: true, message: msg });
+          setall(msgs);
+       }
+  }
+  useEffect(() => {
+    if (socket.current) {
+      socket.current.on("msg-recieve", (msg) => {
+        setArrivalMessage({ fromSelf: false, message: msg });
+      });
+    }
+  }, []);
+  useEffect(() => {
+    const getCurrentChat = async () => {
+      if (currentChat) {
+        await JSON.parse(
+          localStorage.getItem("user-chat")
+        )._id;
+      }
+    };
+    getCurrentChat();
+  }, [currentChat]);
+  useEffect(() => {
+    arrivalMessage && setall((prev) => [...prev, arrivalMessage]);
+  }, [arrivalMessage]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [currentallMsg]);
     return (
         <>
         <Container>
@@ -17,43 +91,100 @@ export default function ChatArea({currentChat})
             </div>
             <Logout/>
             </div>
-            <div className="chat-message"></div>
-            <div className="chat-input"></div>
+            <div className="chat-messages">
+        {currentallMsg.length>0 && currentallMsg.map((message) => {
+          return (
+            <div ref={scrollRef}>
+              <div
+                className={`message ${
+                  message.fromSelf ? "sended" : "recieved"
+                }`}
+              >
+                <div className="content ">
+                  <p>{message.message}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+          
+            <div className="chat-input">
+            <ChatInput handleSend={handleSend}/>
+            </div>
         </Container>
         </>
     )
 }
 const Container = styled.div`
-display: grid;
-grid-template-rows: 10% 80% 10%;
-gap: 0.1rem;
-overflow: hidden;
-@media screen and (min-width: 720px) and (max-width: 1080px) {
-  grid-template-rows: 15% 70% 15%;
-}
-.chat-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 2rem;
-  .user-details {
+  display: grid;
+  grid-template-rows: 10% 80% 10%;
+  gap: 0.1rem;
+  overflow: hidden;
+  @media screen and (min-width: 720px) and (max-width: 1080px) {
+    grid-template-rows: 15% 70% 15%;
+  }
+  .chat-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 1rem;
-    .avatar {
-      img {
-        height: 3rem;
+    padding: 0 2rem;
+    .user-details {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      .avatar {
+        img {
+          height: 3rem;
+        }
       }
-    }
-    .username {
-      h2 {
-        color: white;
+      .username {
+        h3 {
+          color: white;
+        }
       }
     }
   }
-}
-
-  
- 
-}
+  .chat-messages {
+    padding: 1rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow: auto;
+    &::-webkit-scrollbar {
+      width: 0.2rem;
+      &-thumb {
+        background-color: #ffffff39;
+        width: 0.1rem;
+        border-radius: 1rem;
+      }
+    }
+    .message {
+      display: flex;
+      align-items: center;
+      .content {
+        max-width: 40%;
+        overflow-wrap: break-word;
+        padding: 1rem;
+        font-size: 1.1rem;
+        border-radius: 1rem;
+        color: #d1d1d1;
+        @media screen and (min-width: 720px) and (max-width: 1080px) {
+          max-width: 70%;
+        }
+      }
+    }
+    .sended {
+      justify-content: flex-end;
+      .content {
+        background-color: #4f04ff21;
+      }
+    }
+    .recieved {
+      justify-content: flex-start;
+      .content {
+        background-color: #9900ff20;
+      }
+    }
+  }
 `

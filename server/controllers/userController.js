@@ -69,8 +69,13 @@ module.exports.register = async (req, res, next) => {
   };
   module.exports.logout = async(req,res,next) =>
   {
-      await User.deleteOne({_id:req.params.id});
-      return res.json({status: 200});
+    try {
+      if (!req.params.id) return res.json({ msg: "User id is required " });
+      onlineUsers.delete(req.params.id);
+      return res.status(200).send();
+    } catch (ex) {
+      next(ex);
+    }
   }
   
   
